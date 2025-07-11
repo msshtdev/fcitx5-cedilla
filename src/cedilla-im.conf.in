@@ -1,0 +1,7 @@
+[InputMethod]
+Name=Cedilla
+Icon=Ç
+Label=Ç
+LangCode=fr
+Addon=cedilla
+Configurable=True

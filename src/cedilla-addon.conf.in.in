@@ -1,0 +1,9 @@
+[Addon]
+Name=Cedilla
+Category=InputMethod
+Version=@PROJECT_VERSION@
+Library=fcitx5-cedilla
+Type=SharedLibrary
+OnDemand=True
+Configurable=True
+Icon=Ç

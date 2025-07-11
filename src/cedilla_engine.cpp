@@ -19,10 +19,52 @@
 
 #include "cedilla_engine.hpp"
 
-void CedillaEngine::keyEvent(const fcitx::InputMethodEntry &entry,
-                             fcitx::KeyEvent &keyEvent) {
+#include "cedilla_state.hpp"
+
+namespace fcitx {
+
+CedillaEngine::CedillaEngine(Instance *instance)
+    : instance_(instance), factory_([this](InputContext &ic) {
+          return new CedillaState(this, &ic);
+      }) {
+    instance->inputContextManager().registerProperty("CedillaState", &factory_);
+}
+
+void CedillaEngine::activate(const InputMethodEntry &entry,
+                             InputContextEvent &event) {
     FCITX_UNUSED(entry);
-    FCITX_INFO() << keyEvent.key() << " isRelease=" << keyEvent.isRelease();
+    FCITX_DEBUG() << "CedillaEngine activate";
+
+    auto inputContext = event.inputContext();
+    auto state = inputContext->propertyFor(&factory_);
+    state->reset();
+    inputContext->updatePreedit();
+    inputContext->updateUserInterface(UserInterfaceComponent::InputPanel);
+}
+
+void CedillaEngine::deactivate(const InputMethodEntry &entry,
+                               InputContextEvent &event) {
+    FCITX_UNUSED(entry);
+    FCITX_DEBUG() << "CedillaEngine deactivate";
+
+    auto inputContext = event.inputContext();
+    auto state = inputContext->propertyFor(&factory_);
+    state->reset();
+    inputContext->updatePreedit();
+    inputContext->updateUserInterface(UserInterfaceComponent::InputPanel);
+}
+
+void CedillaEngine::keyEvent(const InputMethodEntry &entry,
+                             KeyEvent &keyEvent) {
+    FCITX_UNUSED(entry);
+    FCITX_DEBUG() << keyEvent.key() << " isRelease=" << keyEvent.isRelease();
+
+    auto inputContext = keyEvent.inputContext();
+    inputContext->propertyFor(&factory_)->keyEvent(keyEvent);
+    inputContext->updatePreedit();
+    inputContext->updateUserInterface(UserInterfaceComponent::InputPanel);
 }
 
 FCITX_ADDON_FACTORY(CedillaEngineFactory)
+
+}  // namespace fcitx

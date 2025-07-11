@@ -5,9 +5,9 @@ lint:
 	python -m venv .venv && \
 	. .venv/bin/activate && \
 	pip install cpplint && \
-	find src/ -name '*.cpp' -o -name '*.hpp' | \
+	find src/ \( -name '*.cpp' -o -name '*.hpp' \) | \
 	xargs cpplint \
-	  --filter=-whitespace/indent_namespace,-build/include_order,-runtime/references,-build/c++17,-build/include_subdir
+	  --filter=-whitespace/indent,-whitespace/indent_namespace,-build/include_order,-runtime/references,-build/c++17,-build/include_subdir
 
 tidy:
 	rm -rf ./build

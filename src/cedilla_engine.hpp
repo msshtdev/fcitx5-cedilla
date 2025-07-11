@@ -1,5 +1,5 @@
 /*
- * cedilla_engine.cpp - fcitx5 module for Cedilla input method
+ * cedilla_engine.hpp - fcitx5 module for Cedilla input method
  *
  * Copyright (C) 2025 msshtdev <dev.msshta@proton.me>
  *
@@ -21,18 +21,36 @@
 #define SRC_CEDILLA_ENGINE_HPP_
 
 #include <fcitx/addonfactory.h>
+#include <fcitx/addonmanager.h>
 #include <fcitx/inputmethodengine.h>
+#include <fcitx/instance.h>
+
+#include "cedilla_state.hpp"
+
+namespace fcitx {
 
 class CedillaEngine : public fcitx::InputMethodEngineV2 {
-    void keyEvent(const fcitx::InputMethodEntry &entry,
-                  fcitx::KeyEvent &keyEvent) override;
+   public:
+    explicit CedillaEngine(Instance *instance);
+    void activate(const InputMethodEntry &entry,
+                  InputContextEvent &event) override;
+    void deactivate(const InputMethodEntry &entry,
+                    InputContextEvent &event) override;
+    void keyEvent(const InputMethodEntry &entry, KeyEvent &keyEvent) override;
+    auto factory() const { return &factory_; }
+    auto instance() const { return &instance_; }
+
+   private:
+    Instance *instance_;
+    FactoryFor<CedillaState> factory_;
 };
 
-class CedillaEngineFactory : public fcitx::AddonFactory {
-    fcitx::AddonInstance *create(fcitx::AddonManager *manager) override {
-        FCITX_UNUSED(manager);
-        return new CedillaEngine;
+class CedillaEngineFactory : public AddonFactory {
+    AddonInstance *create(AddonManager *manager) override {
+        return new CedillaEngine(manager->instance());
     }
 };
+
+}  // namespace fcitx
 
 #endif  // SRC_CEDILLA_ENGINE_HPP_

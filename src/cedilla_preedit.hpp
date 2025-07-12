@@ -1,5 +1,5 @@
 /*
- * cedilla_state.hpp - fcitx5 module for Cedilla input method
+ * cedilla_preedit.hpp - fcitx5 module for Cedilla input method
  *
  * Copyright (C) 2025 msshtdev <dev.msshta@proton.me>
  *
@@ -17,37 +17,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_CEDILLA_STATE_HPP_
-#define SRC_CEDILLA_STATE_HPP_
+#ifndef SRC_CEDILLA_PREEDIT_HPP_
+#define SRC_CEDILLA_PREEDIT_HPP_
 
 #include <fcitx/inputcontext.h>
 #include <fcitx/inputpanel.h>
-#include <fcitx/surroundingtext.h>
 
-#include <map>
 #include <string>
-#include <unordered_set>
-
-#include "cedilla_preedit.hpp"
 
 namespace fcitx {
 
-class CedillaEngine;
-
-class CedillaState : public InputContextProperty {
+class CedillaPreedit {
    public:
-    CedillaState(CedillaEngine *engine, InputContext *ic);
-    void keyEvent(KeyEvent &keyEvent);
-    void reset();
+    explicit CedillaPreedit(InputContext *ic) : ic_(ic) {}
+    std::string text() const;
+    void setPreedit(Text text);
+    void commitPreedit();
 
    private:
-    CedillaEngine *engine_;
     InputContext *ic_;
-    CedillaPreedit preedit_;
-    std::string composingText_;
-    bool isFr_ = false;
-    void handleFrKeyEvent(KeyEvent &keyEvent);
 };
 }  // namespace fcitx
-
-#endif  // SRC_CEDILLA_STATE_HPP_
+#endif  // SRC_CEDILLA_PREEDIT_HPP_

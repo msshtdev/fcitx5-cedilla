@@ -22,20 +22,114 @@
 #include <string>
 
 #include "cedilla_engine.hpp"
+#include "cedilla_preedit.hpp"
+#include "cedilla_ruleset.hpp"
 
 namespace fcitx {
+
 CedillaState::CedillaState(CedillaEngine *engine, InputContext *ic)
-    : engine_(engine), ic_(ic) {
+    : engine_(engine), ic_(ic), preedit_(CedillaPreedit(ic)) {
     composingText_ = std::string("");
 }
 
 void CedillaState::keyEvent(KeyEvent &keyEvent) {
-    FCITX_INFO() << keyEvent.key() << " isRelease=" << keyEvent.isRelease();
+    if (keyEvent.isRelease()) {
+        return;
+    }
+
+    if (keyEvent.key().states() == KeyState::Shift &&
+        keyEvent.key().sym() == FcitxKey_space) {
+        isFr_ = !isFr_;
+        composingText_ = std::string("");
+        preedit_.setPreedit(Text(composingText_));
+        return keyEvent.filterAndAccept();
+    }
+
+    if (!isFr_) {
+        return keyEvent.filter();
+    }
+
+    handleFrKeyEvent(keyEvent);
+}
+
+void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
+    auto key = keyEvent.key();
+    auto keysym = key.sym();
+    std::string newLetter = Key::keySymToUTF8(keysym);
+
+    if (key.states() == KeyState::Ctrl) {
+        return keyEvent.filter();
+    }
+
+    if (composingText_.empty()) {
+        if (triggerLetterSet.find(newLetter) != triggerLetterSet.end()) {
+            composingText_ += newLetter;
+            preedit_.setPreedit(Text(composingText_));
+        } else {
+            return keyEvent.filter();
+        }
+    } else {
+        switch (keysym) {
+            case FcitxKey_Return:
+                preedit_.commitPreedit();
+                reset();
+                break;
+            case FcitxKey_BackSpace:
+                composingText_.pop_back();
+                preedit_.setPreedit(Text(composingText_));
+                break;
+            case FcitxKey_Escape:
+                reset();
+                break;
+            case FcitxKey_Tab: {
+                auto convertIter = convertTable.find(composingText_);
+                if (convertIter == convertTable.end()) {
+                    ic_->commitString(composingText_);
+                    composingText_ = std::string("");
+                    preedit_.setPreedit(Text(composingText_));
+                    return keyEvent.filter();
+                }
+                ic_->commitString(convertIter->second);
+                composingText_ = std::string("");
+                preedit_.setPreedit(Text(composingText_));
+                break;
+            }
+            default:
+                if (key.isSimple()) {
+                    composingText_ += newLetter;
+
+                    auto convertIter = convertTable.find(composingText_);
+                    if (convertIter != convertTable.end()) {
+                        if (ligatureTable.find(composingText_) ==
+                            ligatureTable.end()) {
+                            composingText_ = "";
+                            ic_->commitString(convertIter->second);
+                        }
+                    } else {
+                        std::string lastLetter =
+                            std::string(1, composingText_.back());
+                        if (triggerLetterSet.find(lastLetter) !=
+                            triggerLetterSet.end()) {
+                            composingText_.pop_back();
+                            ic_->commitString(composingText_);
+                            composingText_ = lastLetter;
+                        } else {
+                            ic_->commitString(composingText_);
+                            composingText_ = "";
+                        }
+                    }
+                    preedit_.setPreedit(Text(composingText_));
+                    break;
+                } else {
+                    return keyEvent.filter();
+                }
+        }
+    }
+    return keyEvent.filterAndAccept();
 }
 
 void CedillaState::reset() {
     composingText_ = std::string("");
-    isFr_ = false;
     ic_->inputPanel().reset();
 }
 }  // namespace fcitx

@@ -1,6 +1,8 @@
 set(CPP_SOURCES
   cedilla_engine.cpp
   cedilla_state.cpp
+  cedilla_preedit.cpp
+  cedilla_ruleset.cpp
 )
 
 add_library(fcitx5-cedilla

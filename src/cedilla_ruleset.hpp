@@ -1,5 +1,5 @@
 /*
- * cedilla_state.hpp - fcitx5 module for Cedilla input method
+ * cedilla_ruleset.hpp - fcitx5 module for Cedilla input method
  *
  * Copyright (C) 2025 msshtdev <dev.msshta@proton.me>
  *
@@ -17,37 +17,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_CEDILLA_STATE_HPP_
-#define SRC_CEDILLA_STATE_HPP_
+#ifndef SRC_CEDILLA_RULESET_HPP_
+#define SRC_CEDILLA_RULESET_HPP_
 
-#include <fcitx/inputcontext.h>
-#include <fcitx/inputpanel.h>
-#include <fcitx/surroundingtext.h>
-
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
-#include "cedilla_preedit.hpp"
+extern const std::unordered_set<std::string> triggerLetterSet;
 
-namespace fcitx {
+extern const std::unordered_map<std::string, std::string> convertTable;
 
-class CedillaEngine;
+extern const std::unordered_map<std::string, std::string> ligatureTable;
 
-class CedillaState : public InputContextProperty {
-   public:
-    CedillaState(CedillaEngine *engine, InputContext *ic);
-    void keyEvent(KeyEvent &keyEvent);
-    void reset();
-
-   private:
-    CedillaEngine *engine_;
-    InputContext *ic_;
-    CedillaPreedit preedit_;
-    std::string composingText_;
-    bool isFr_ = false;
-    void handleFrKeyEvent(KeyEvent &keyEvent);
-};
-}  // namespace fcitx
-
-#endif  // SRC_CEDILLA_STATE_HPP_
+#endif  // SRC_CEDILLA_RULESET_HPP_

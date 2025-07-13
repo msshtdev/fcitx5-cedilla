@@ -58,6 +58,8 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
     std::string newLetter = Key::keySymToUTF8(keysym);
 
     if (key.states() == KeyState::Ctrl) {
+        composingText_ = std::string("");
+        preedit_.setPreedit(Text(composingText_));
         return keyEvent.filter();
     }
 
@@ -83,13 +85,11 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
                 break;
             case FcitxKey_Tab: {
                 auto convertIter = convertTable.find(composingText_);
-                if (convertIter == convertTable.end()) {
-                    ic_->commitString(composingText_);
-                    composingText_ = std::string("");
-                    preedit_.setPreedit(Text(composingText_));
-                    return keyEvent.filter();
+                if (convertIter != convertTable.end()) {
+                    ic_->commitString(convertIter->second);
+                } else {
+                    preedit_.commitPreedit();
                 }
-                ic_->commitString(convertIter->second);
                 composingText_ = std::string("");
                 preedit_.setPreedit(Text(composingText_));
                 break;

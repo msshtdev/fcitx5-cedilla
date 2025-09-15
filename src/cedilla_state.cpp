@@ -40,8 +40,7 @@ void CedillaState::keyEvent(KeyEvent &keyEvent) {
     if (keyEvent.key().states() == KeyState::Shift &&
         keyEvent.key().sym() == FcitxKey_space) {
         isFr_ = !isFr_;
-        composingText_ = std::string("");
-        preedit_.setPreedit(Text(composingText_));
+        reset();
         return keyEvent.filterAndAccept();
     }
 
@@ -49,7 +48,7 @@ void CedillaState::keyEvent(KeyEvent &keyEvent) {
         return keyEvent.filter();
     }
 
-    handleFrKeyEvent(keyEvent);
+    return handleFrKeyEvent(keyEvent);
 }
 
 void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
@@ -57,16 +56,11 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
     auto keysym = key.sym();
     std::string newLetter = Key::keySymToUTF8(keysym);
 
-    if (key.states() == KeyState::Ctrl) {
-        composingText_ = std::string("");
-        preedit_.setPreedit(Text(composingText_));
-        return keyEvent.filter();
-    }
-
     if (composingText_.empty()) {
         if (triggerLetterSet.find(newLetter) != triggerLetterSet.end()) {
             composingText_ += newLetter;
-            preedit_.setPreedit(Text(composingText_));
+            preedit_.setPreedit(
+                Text(composingText_, TextFormatFlag::HighLight));
         } else {
             return keyEvent.filter();
         }
@@ -78,20 +72,26 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
                 break;
             case FcitxKey_BackSpace:
                 composingText_.pop_back();
-                preedit_.setPreedit(Text(composingText_));
+                preedit_.setPreedit(
+                    Text(composingText_, TextFormatFlag::HighLight));
                 break;
             case FcitxKey_Escape:
+                preedit_.commitPreedit();
                 reset();
                 break;
             case FcitxKey_Tab: {
                 auto convertIter = convertTable.find(composingText_);
                 if (convertIter != convertTable.end()) {
-                    ic_->commitString(convertIter->second);
+                    preedit_.setPreedit(
+                        Text(convertIter->second, TextFormatFlag::HighLight));
                 } else {
-                    preedit_.commitPreedit();
+                    preedit_.setPreedit(
+                        Text(composingText_, TextFormatFlag::HighLight));
                 }
+                preedit_.commitPreedit();
                 composingText_ = std::string("");
-                preedit_.setPreedit(Text(composingText_));
+                preedit_.setPreedit(
+                    Text(composingText_, TextFormatFlag::HighLight));
                 break;
             }
             default:
@@ -102,8 +102,11 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
                     if (convertIter != convertTable.end()) {
                         if (ligatureTable.find(composingText_) ==
                             ligatureTable.end()) {
+                            preedit_.setPreedit(
+                                Text(convertIter->second,
+                                     TextFormatFlag::HighLight));
+                            preedit_.commitPreedit();
                             composingText_ = "";
-                            ic_->commitString(convertIter->second);
                         }
                     } else {
                         std::string lastLetter =
@@ -111,18 +114,22 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
                         if (triggerLetterSet.find(lastLetter) !=
                             triggerLetterSet.end()) {
                             composingText_.pop_back();
-                            ic_->commitString(composingText_);
+                            preedit_.setPreedit(Text(
+                                composingText_, TextFormatFlag::HighLight));
+                            preedit_.commitPreedit();
                             composingText_ = lastLetter;
                         } else {
-                            ic_->commitString(composingText_);
+                            preedit_.setPreedit(Text(
+                                composingText_, TextFormatFlag::HighLight));
+                            preedit_.commitPreedit();
                             composingText_ = "";
                         }
                     }
-                    preedit_.setPreedit(Text(composingText_));
-                    break;
                 } else {
                     return keyEvent.filter();
                 }
+                preedit_.setPreedit(
+                    Text(composingText_, TextFormatFlag::HighLight));
         }
     }
     return keyEvent.filterAndAccept();

@@ -32,7 +32,7 @@ std::string CedillaPreedit::text() const {
 }
 
 void CedillaPreedit::setPreedit(Text text) {
-    text.setCursor(text.size() + 1);
+    text.setCursor(text.size());
     if (ic_->capabilityFlags().test(CapabilityFlag::Preedit)) {
         ic_->inputPanel().setClientPreedit(text);
     } else {

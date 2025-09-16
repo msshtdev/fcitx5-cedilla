@@ -56,6 +56,12 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
     auto keysym = key.sym();
     std::string newLetter = Key::keySymToUTF8(keysym);
 
+    if (key.states() == KeyState::Ctrl) {
+        composingText_ = std::string("");
+        preedit_.setPreedit(Text(composingText_));
+        return keyEvent.filter();
+    }
+
     if (composingText_.empty()) {
         if (triggerLetterSet.find(newLetter) != triggerLetterSet.end()) {
             composingText_ += newLetter;
@@ -117,7 +123,8 @@ void CedillaState::handleFrKeyEvent(KeyEvent &keyEvent) {
                             preedit_.setPreedit(Text(
                                 composingText_, TextFormatFlag::HighLight));
                             preedit_.commitPreedit();
-                            composingText_ = lastLetter;
+                            composingText_ =
+                                lastLetter == composingText_ ? "" : lastLetter;
                         } else {
                             preedit_.setPreedit(Text(
                                 composingText_, TextFormatFlag::HighLight));
